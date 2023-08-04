@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+  
+<mapper namespace="DeptMapper">
+
+  <select id="findAllPage" resultType="com.dto.DeptDTO">
+    select deptno, dname, loc
+     from dept
+     order by deptno
+  </select>
+  
+  <select id="findAll" resultType="com.dto.DeptDTO">
+    select deptno, dname, loc
+     from dept
+  </select>
+  
+   <select id="findbyDeptno" resultType="com.dto.DeptDTO" 
+   parameterType="int">
+    select deptno, dname, loc
+     from dept
+     where deptno = #{deptno}
+  </select>
+  
+  <select id="findByDeptnoAndDname" resultType="com.dto.DeptDTO" 
+  parameterType="DeptDTO">
+  <!-- XML의 CDATA 섹션 ==> 쓰는 이유: 감싼 sql문을 문자데이터로 처리 -->
+  <![CDATA[
+    select deptno, dname, loc
+     from dept
+     where deptno < #{deptno} or dname like '%'||#{dname}||'%' 
+     ]]>
+     <!-- '인'이 들어간 애를 다 찾을 수 있음 -->
+  
+  </select>
+  
+  <select id="findByDeptnoAndDname" resultType="com.dto.DeptDTO" 
+  parameterType="hashmap">
+    select deptno, dname, loc
+     from dept
+     where deptno = #{xxx} or dname=#{yyy}
+  </select>
+</mapper>
