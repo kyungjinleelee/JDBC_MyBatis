@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+  
+<mapper namespace="DeptDynamicMapper">
+
+  <select id="selectByDeptnoMulti" resultType="DeptDTO" parameterType="arraylist"> 
+  <!-- ArrayList의 별칭은 arraylist, resultType은 별칭 지정 완료 -->
+  	select deptno, dname, loc 
+  	from dept
+  	where deptno IN
+  	<foreach item="item" collection="list"
+  	open="(" separator="," close=")">
+  	#{item}
+  	</foreach>
+  </select>
+  
+  <select id="selectByDeptnoMulti2" resultType="DeptDTO" parameterType="arraylist"> 
+  <!-- ArrayList의 별칭은 arraylist, resultType은 별칭 지정 완료 -->
+  	select deptno, dname, loc 
+  	from dept
+  	<where> 
+  	<foreach item="item" collection="list"
+  	open="deptno IN (" separator="," close=")">
+  	#{item.deptno}
+  	<!-- 전달한 데이터가 deptno이기 때문에 -->
+  	</foreach>
+  	</where>
+  </select>
+  
+  <delete id="deleteMulti" parameterType="arraylist">
+    delete from dept
+    <where>
+    <!-- where문은 동적으로 작성 -->
+     <foreach item="item" collection="list"
+  	  open="deptno IN (" separator="," close=")">
+    	#{item}
+    </foreach>	
+    </where>
+  </delete>
+  
+  <update id="updateMulti" parameterType="arraylist">
+   	update dept 
+   	set dname='개발'
+   	<where>
+   	 <foreach item="item" collection="list"
+  	  open="deptno IN (" separator="," close=")">
+    	#{item}
+    </foreach>	
+   	</where>
+  </update>
+  
+  <insert id="insertMulti" parameterType="arraylist">
+  	insert all
+  	<foreach item="item" collection="list">
+  		into dept (deptno, dname, loc) values (#{item.deptno}, #{item.dname}, #{item.loc})
+ 	</foreach>
+ 	select * from dual
+  </insert>
+  
+  <select id="selectAllorDname" parameterType="string" resultType="DeptDTO">
+  	select deptno, dname, loc
+  	from dept
+  	<!-- where 절 나오면 무조건 where태그 준다고 생각 -->
+  	<where>
+  	<if test="dname != null">
+  		dname=#{dname}
+  	</if>
+  	</where>
+  	</select>
+  	
+  	<select id="selectByDnameChoose" parameterType="hashmap" resultType="DeptDTO">
+  		select deptno, dname, loc
+  		from dept
+  		<where>
+  			<choose>
+  				<!-- dname이 개발이면? 10, 20, 30 만들어지는 조건절 -->
+  				<when test="dname == '개발'">
+  					deptno IN(10,20,30)
+  				</when>
+  				<when test="dname == '영업부'">
+  					deptno = 40
+  				</when>
+  				  <otherwise>
+  				  	deptno IN (90, 91, 92)
+  				  </otherwise>
+  			</choose>
+  		</where>
+  	</select>
+</mapper>
