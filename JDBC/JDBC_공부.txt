@@ -1,0 +1,152 @@
+JDBC( Java DataBase Connectivity )
+
+1. 개요
+
+2. 특징
+   - 벤더에서 제공해준 클래스파일(드라이버)가 필요하다.
+     압축파일(jar)로 제공한다.(압축풀면 안됨)
+     RDBMS의 버전마다 다르다.
+     실습> C:\oraclexe\app\oracle\product\11.2.0\server\jdbc\lib
+         ojdbc6_g.jar
+
+   - java.sql 패키지 사용
+   - 비런타임 계열이기 때문에 무조건 예외처리(try~catch, throws)가 필수이다.
+
+3. DB연동 순서 - SELECT 문
+
+ 가. 이클립스에서 프로젝트 생성
+ 나. 오라클 드라이버(ojdbc6_g.jar)를
+   현재 생성한 이클립스 프로젝트에 알려줘야 된다.
+    ==> 빌드패스(build path)라고 부른다.
+ 다. 클래스 작성
+ 라. 오라클 DB연동하기 위한 4가지 정보를 문자열로 저장한다.
+
+    // ojdbc6_g.jar 파일들중에서 가장 핵심되는 클래스명을 지정한다.
+    String driver="oracle.jdbc.driver.OracleDriver";
+
+    // 관리자에서 show parameter db_name; 명령어로 서비스명(DB명) 확인한다.
+    // 오라클 접속정보를 저장한다.
+    String url="jdbc:oracle:thin:@localhost:1521:xe";
+
+    // 계정명
+    String userid="SCOTT";
+    // 비번
+    String passwd="TIGER";
+
+마. 드라이버 로딩 ( OracleDriver 클래스 객체생성 ) ==> new 사용 안하고 Class.forName(문자열);
+
+    try{
+      Class.forName(driver);
+    }catch(ClassNotFoundException e){
+      System.out.println(e.getMessage());
+      // e.printStackTrace();
+    }
+
+바. 오라클 연결 ==> java.sql.Connection, new 불가(Connection은 인터페이스)
+
+    Connection con = DriverManager.getConnection(url, userid, passwd); // 다형성
+    //다형성
+    인터페이스명 변수 = 하위클래스;
+    Flyer f = new Bird();
+    
+    // 예외처리 추가한 코드
+     Connection con = null;
+    try{
+       con = DriverManager.getConnection(url, userid, passwd);
+
+    }catch(SQLException e){
+
+    }
+
+사.  sql 문 작성 ==> 주의할 점은 마지막에 ; 사용 불가.
+
+   String sql = "select deptno as no, dname, loc from dept";
+
+
+아. sql 문 전송한 객체 얻기 ==> java.sql.PreparedStatement, new 불가(PreparedStatement은 인터페이스)
+
+
+     PreparedStatement pstmt = con.prepareStatement(sql);
+  
+   ==> try~catch 필수
+ 
+자. sql문 전송하기
+
+   a. select 문 전송
+     ==> 결과가 테이블로 반환	 	
+     ==> ResultSet이 실제 select한 결과값을 참조한다.
+
+     ResultSet rs = pstmt.executeQuery();
+     while(rs.next()){ // 행선택
+        // 컬럼 선택:   rs.getInt(컬럼헤더값|순서) , rs.getString(컬럼헤더값|순서)
+     }
+
+
+   b. DML(insert/delete/update) 문 전송
+    ==> 결과가 정수로 반환 ( 정수값: DML 적용된 레코드 갯수)
+
+     int num = pstst.executeUpdate();
+
+   ==> try~catch 필수
+
+차. 사용했던 API ( Connection, PreparedStatement, ResultSet ) close
+
+    - 중요한 것은 역순으로 close 작업 ==> close() 메서드 사용
+    - finally 문 처리
+
+   ==> try~catch 필수
+##################################################################
+JDBC의 DML 작업은 자동커밋된다. ==> 자동커밋을 트랜잭션 때문에 비활성화 가능 ( 명시적으로 commit 하도록 변경 가능)
+
+##################################################################
+##################################################################
+JDBC 리뷰
+
+1)RDBMS 설치
+2)RDBMS 회사에서 제공된 jar 파일 얻기 ( 드라이버 )
+ ==> 홈페이지에서 다운로드 또는 설치할 때 제공
+ ==> 실제로는 전반적인 어플리케이션 개발시 전체 프로세스에서 필요한 작업들을 도와주는 유틸리티를 사용한다.
+     ( Maven, gradle 빌드툴 )
+3)사용하는 있는 에디터(eclipse, ...)에 드라이버 인식 ==> 빌드패스(build path)
+4)4가지 정보
+  String driver = "oracle.jdbc.driver.OracleDriver";
+  String url ="jdbc:oracle:thin:@localhost:1521:xe";
+  String usrid ="SCOTT";
+  String passwd ="TIGER";
+
+5)드라이버 로딩 ==> OracleDriver 객체생성, try~catch 필수
+   Class.forName(driver);
+
+6)Connection 맺기 ==> 인터페이스 , try~catch 필수
+
+   Connection con = DriverManager.getConnection(url, usrid, passwd );
+
+7) sql문 작성 ==> 마지막 ; 사용불가
+
+   String sql ="SELECT~";  // "INSERT|DELETE|UPDATE ~"
+
+8) PreparedStatement 얻기 ==> sql문 전송 담당 객체, 인터페이스 송
+
+   PreparedStatement pstmt = con.prepareStatement(sql);
+
+
+9) sql 문 전송 ==> 인터페이스 , try~catch 필수
+
+  가. select 문
+     ResultSet rs = pstmt.executeQuery();
+     while(rs.next()){
+        int deptno = rs.getInt("컬럼의헤더값"|컬럼의순서);
+        ..
+	..
+     }
+
+
+  나. DML 문
+     int n = pstmt.executeUpdate();  // n값은 DML의 실행 갯수
+     
+10) 사용했던 리소스(Connection, PreparedStatement, ResultSet) close 작업,  try~catch 필수
+   ==> 반드시 사용했던 순서의 역순으로 close 한다.
+  
+     rs.close();
+     pstmt.close();
+     con.close();
