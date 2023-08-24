@@ -1,0 +1,122 @@
+Mybatis 프레임워크
+
+1. 개요
+  - JDBC 사용을 효율적으로,편리하게,파워풀하게 사용하도록 만든 프레임워크
+  - ibatis (old버전)
+
+2. 홈페이지
+  http://mybatis.org
+
+3. 사용방법
+
+ 가. RDBMS 설치 (오라클)
+ 나. 오라클 드라이버 (ojdbc6_g.jar)
+ 다. mybatis 기능을 가진 jar 파일 다운 ( mybatis-3.5.13.jar )
+   https://github.com/mybatis/mybatis-3/releases
+
+ 라. 오라클 드라이버와 mybatis jar 파일 2개를 build path 한다.
+ 마. 2개의 xml 파일 작성 ==> src 폴더에 저장, 패키지 사용 가능
+
+   a. 설정정보 저장 xml 
+      - 1 개 작성
+      - Configuration.xml
+
+   b. sql 저장 xml
+      - 테이블 당 하나씩 작성
+      - 명명법:  테이블명Mapper.xml
+             예> DeptMapper.xml,  EmpMapper.xml
+
+ 바. 자바파일에서 Configuration.xml 을 읽음.
+
+     String resource = "Configuration.xml";
+     InputStream inputStream = Resources.getResourceAsStream(resource);
+     SqlSessionFactory sqlSessionFactory =
+          new SqlSessionFactoryBuilder().build(inputStream);
+
+ 사. SqlSession 얻고 메서드 호출
+
+    SqlSession session = sqlSessionFactory.openSession()
+     a. 검색용
+       
+        - 단일행 ( DTO 저장 )
+           
+	   <select id=""  resultType="DeptDTO">  
+	   DeptDTO dto = session.selectOne("mapper id값");
+
+
+           // obj는 파라미터, mapper의 #{} 에서 사용
+	   <select id=""  resultType="DeptDTO" parameterType="obj타입">
+	   DeptDTO dto = session.selectOne("mapper id값", Object obj); 
+
+	- 복수행 ( 여러 DTO 저장하고 자동으로 List에 저장 )
+
+           <select id="findAll" resultType="DeptDTO">
+       
+           ==> List<DeptDTO> list =session.selectList("mapper id값");
+
+	  <select id=""  resultType="DeptDTO" parameterType="obj타입">
+           
+	   ==> List<DeptDTO> list =session.selectList("mapper id값", Object obj);
+
+          <select id="findByDeptnoAndDnameMap" resultType="DeptDTO"
+	           parameterType="hashmap" >
+        
+           ==> List<DeptDTO> list =
+	   session.selectList("mapper id값", HashMap map);
+
+ ==> parameterType="값" 값이 정해져 있다.
+
+
+         
+          List<DeptDTO> list =session.selectList("mapper id값", Object obj,
+	                  RowBounds bounds);
+          ==> 전체 레코드가 일정갯수만큼만 검색이 가능
+	  ==> new RowBounds(시작위치idx, 갯수)
+          ==> paging 처리에서 주로 사용됨. ( 게시판 )
+
+아. SqlSession close
+   - session.close();
+
+* 다음과 같은 에러가 발생되면 무조건 id 일치하는지 확인할것.
+Mapped Statements collection does not contain value for 
+
+####################################################
+typeAlias
+
+1) mapper.xml에서 사용하는 resultType="com.dto.DeptDTO" 
+                     또는 parameterType="com.dto.DeptDTO" 사용을 별칭으로 변경할 수 있다.
+
+2) Configuration.xml 에서 설정 
+
+ <typeAliases>
+  <typeAlias alias="DeptDTO" type="com.dto.DeptDTO"/>
+</typeAliases>
+
+############################################
+XML의 CDATA 섹션 ==> 감싼 SQL문을 문자데이터로 처리한다.
+
+<![CDATA[
+  SQL문
+]]>
+#############################
+DML
+
+1) SqlSession 얻기
+2) DML 메서드 제공
+  가. insert
+    int n = session.insert("");
+    int n = session.insert("", Object ob);
+
+  나. update
+    int n = session.update("");
+    int n = session.update("", Object ob);
+
+  다. delete
+    int n = session.delete("");
+    int n = session.delete("", Object ob);
+
+3) session.commit() 호출
+
+  - JDBC에서는 DML이 기본적으로 auto commit임.
+  - MyBatis에서는 기본적으로 auto commit이 아니기 때문에 명시적으로 commit 호출해야 된다.
+    auto commit으로 변경할려면  openSession(true) 로 지정하면 된다. 기본은 false
